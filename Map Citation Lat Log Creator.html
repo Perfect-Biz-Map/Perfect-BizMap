@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Latitude/Longitude Grid Generator</title>
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --accent-color: #3498db;
+      --background-color: #f5f7fa;
+      --card-background: #ffffff;
+      --text-color: #333333;
+      --border-color: #e0e0e0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 20px;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h2 {
+      color: var(--primary-color);
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--primary-color);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+      background-color: var(--card-background);
+      box-sizing: border-box;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      background-color: var(--accent-color);
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: var(--card-background);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: 600;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background-color: rgba(52, 152, 219, 0.05);
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      button {
+        padding: 10px 20px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Latitude/Longitude Grid Generator</h2>
+
+    <div class="form-group">
+      <label>Center Latitude:</label>
+      <input type="number" id="centerLat" value="22.2434924" step="any">
+    </div>
+
+    <div class="form-group">
+      <label>Center Longitude:</label>
+      <input type="number" id="centerLng" value="70.7628087" step="any">
+    </div>
+
+    <div class="form-group">
+      <label>Distance (in KM):</label>
+      <input type="number" id="distance" value="2" step="any">
+    </div>
+
+    <div class="form-group">
+      <label>Grid Size (e.g., 3, 4, 10, 12):</label>
+      <input type="number" id="gridSize" value="3" min="1">
+    </div>
+
+    <div class="button-group">
+      <button onclick="generateGrid()">Generate Grid</button>
+      <button onclick="exportToCSV()">Export to CSV</button>
+    </div>
+
+    <table id="gridTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    function generateGrid() {
+      const centerLat = parseFloat(document.getElementById("centerLat").value);
+      const centerLng = parseFloat(document.getElementById("centerLng").value);
+      const distance = parseFloat(document.getElementById("distance").value);
+      const gridSize = parseInt(document.getElementById("gridSize").value);
+
+      if (isNaN(centerLat) || isNaN(centerLng) || isNaN(distance) || isNaN(gridSize) || gridSize < 1) {
+        alert("Please enter valid input values.");
+        return;
+      }
+
+      const tbody = document.getElementById("gridTable").querySelector("tbody");
+      tbody.innerHTML = "";
+
+      const earthRadius = 6371; // Earth radius in KM
+      const deltaLat = (distance / earthRadius) * (180 / Math.PI);
+      const deltaLng = (distance / earthRadius) * (180 / Math.PI) / Math.cos(centerLat * Math.PI / 180);
+
+      // Calculate the shift range to center the grid
+      const startOffset = -(Math.floor(gridSize / 2));
+      const endOffset = startOffset + gridSize - 1;
+
+      let index = 1;
+      for (let i = startOffset; i <= endOffset; i++) {
+        for (let j = startOffset; j <= endOffset; j++) {
+          const lat = centerLat + i * deltaLat;
+          const lng = centerLng + j * deltaLng;
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${index++}</td><td>${lat.toFixed(6)}</td><td>${lng.toFixed(6)}</td>`;
+          tbody.appendChild(row);
+        }
+      }
+    }
+
+    function exportToCSV() {
+      const rows = [["#", "Latitude", "Longitude"]];
+      document.querySelectorAll("#gridTable tbody tr").forEach(tr => {
+        const cols = tr.querySelectorAll("td");
+        const row = Array.from(cols).map(td => td.innerText);
+        rows.push(row);
+      });
+
+      const csvContent = rows.map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "grid_coordinates.csv";
+      link.click();
+    }
+  </script>
+</body>
+</html>
